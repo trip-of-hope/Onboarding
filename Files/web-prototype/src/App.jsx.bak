@@ -1,0 +1,207 @@
+import { useState, Component } from 'react'
+
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null } }
+  static getDerivedStateFromError(error) { return { error } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 24, fontFamily: 'monospace', fontSize: 14, color: 'red', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          <strong>React Error:</strong>{'\n\n'}{this.state.error.message}{'\n\n'}{this.state.error.stack}
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+import { AnimatePresence, motion } from 'framer-motion'
+import SplashScreen from './screens/SplashScreen'
+import PrivacyConsentScreen from './screens/PrivacyConsentScreen'
+import SignupMethodScreen from './screens/SignupMethodScreen'
+import FirstNameInputScreen from './screens/FirstNameInputScreen'
+import EmailInputScreen from './screens/EmailInputScreen'
+import PasswordCreationScreen from './screens/PasswordCreationScreen'
+import ValuePropFlowScreen from './screens/ValuePropFlowScreen'
+import GoalsFlowScreen from './screens/GoalsFlowScreen'
+import PlanLoadingScreen from './screens/PlanLoadingScreen'
+import PlanReadyScreen from './screens/PlanReadyScreen'
+
+function createInitialState() {
+  return {
+    firstName: '',
+    email: '',
+    password: '',
+    privacyConsent1: false,
+    privacyConsent2: false,
+    hasAppleWatch: null,
+    goal: null,
+    desiredWeight: 70.0,
+    barrier: null,
+    trainingExperience: null,
+    supportingActivities: new Set(),
+    weeklySessions: null,
+    trainingLocation: null,
+    injuries: new Set(),
+    workoutFocus: null,
+    acquisitionSource: null,
+    reminderPermission: false,
+  }
+}
+
+// Plan flow manages loading → ready transition internally
+function PlanFlow() {
+  const [stage, setStage] = useState('loading')
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'white', position: 'relative' }}>
+      <AnimatePresence mode="wait">
+        {stage === 'loading' ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+          >
+            <PlanLoadingScreen onComplete={() => setStage('ready')} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="ready"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+          >
+            <PlanReadyScreen onComplete={() => {}} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+export default function App() {
+  const [screen, setScreen] = useState('splash')
+  const [navHistory, setNavHistory] = useState([])
+  const [showPlanFlow, setShowPlanFlow] = useState(false)
+  const [appState, setAppState] = useState(createInitialState)
+
+  const navigate = (nextScreen) => {
+    setNavHistory(prev => [...prev, screen])
+    setScreen(nextScreen)
+  }
+
+  const goBack = () => {
+    setNavHistory(prev => {
+      if (prev.length === 0) return prev
+      const history = [...prev]
+      const prevScreen = history.pop()
+      setScreen(prevScreen)
+      return history
+    })
+  }
+
+  const update = (changes) => {
+    setAppState(prev => ({ ...prev, ...changes }))
+  }
+
+  const renderScreen = () => {
+    switch (screen) {
+      case 'splash':
+        return <SplashScreen onGetStarted={() => navigate('privacy')} />
+      case 'privacy':
+        return (
+          <PrivacyConsentScreen
+            state={appState}
+            update={update}
+            onContinue={() => navigate('signupMethod')}
+            onBack={goBack}
+          />
+        )
+      case 'signupMethod':
+        return (
+          <SignupMethodScreen
+            onContinueWithEmail={() => navigate('firstName')}
+            onBack={goBack}
+          />
+        )
+      case 'firstName':
+        return (
+          <FirstNameInputScreen
+            state={appState}
+            update={update}
+            onContinue={() => navigate('email')}
+            onBack={goBack}
+          />
+        )
+      case 'email':
+        return (
+          <EmailInputScreen
+            state={appState}
+            update={update}
+            onContinue={() => navigate('password')}
+            onBack={goBack}
+          />
+        )
+      case 'password':
+        return (
+          <PasswordCreationScreen
+            state={appState}
+            update={update}
+            onCreateAccount={() => navigate('valueProp')}
+            onBack={goBack}
+          />
+        )
+      case 'valueProp':
+        return (
+          <ValuePropFlowScreen
+            onComplete={() => navigate('goals')}
+          />
+        )
+      case 'goals':
+        return (
+          <GoalsFlowScreen
+            state={appState}
+            update={update}
+            onComplete={() => setShowPlanFlow(true)}
+            onBack={goBack}
+          />
+        )
+      default:
+        return <SplashScreen onGetStarted={() => navigate('privacy')} />
+    }
+  }
+
+  return (
+    <ErrorBoundary>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', width: '100%' }}>
+      <div className="phone-frame">
+        <AnimatePresence mode="wait">
+          {showPlanFlow ? (
+            <motion.div
+              key="plan"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+            >
+              <PlanFlow />
+            </motion.div>
+          ) : (
+            <motion.div
+              key={screen}
+              initial={false}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+            >
+              {renderScreen()}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+    </ErrorBoundary>
+  )
+}
