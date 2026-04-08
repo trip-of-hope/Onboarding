@@ -73,20 +73,24 @@ struct AccountCreationFlowView: View {
 // MARK: - Plan Flow Coordinator
 
 private struct PlanFlowView: View {
-    enum Stage { case loading, ready }
+    enum Stage { case loading, ready, offer }
     @State private var stage: Stage = .loading
 
     var body: some View {
         ZStack {
-            if stage == .loading {
+            switch stage {
+            case .loading:
                 PlanLoadingView {
-                    withAnimation(.easeInOut(duration: 0.5)) {
-                        stage = .ready
-                    }
+                    withAnimation(.easeInOut(duration: 0.5)) { stage = .ready }
                 }
                 .transition(.opacity)
-            } else {
-                PlanReadyView(onComplete: { /* hand off to main app */ })
+            case .ready:
+                PlanReadyView {
+                    withAnimation(.easeInOut(duration: 0.5)) { stage = .offer }
+                }
+                .transition(.opacity)
+            case .offer:
+                FreeTrialView(onStartNow: { /* hand off to main app */ })
                     .transition(.opacity)
             }
         }

@@ -75,7 +75,7 @@ struct PlanReadyView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 33)
-                    .padding(.top, 72)
+                    .padding(.top, 40)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 16)
                     .animation(.easeOut(duration: 0.4), value: appeared)
@@ -83,7 +83,7 @@ struct PlanReadyView: View {
                     // Week strip
                     WeekStripView(days: weekDays)
                         .padding(.horizontal, 24)
-                        .padding(.top, 24)
+                        .padding(.top, 32)
                         .opacity(appeared ? 1 : 0)
                         .offset(y: appeared ? 0 : 16)
                         .animation(.easeOut(duration: 0.4).delay(0.15), value: appeared)
@@ -106,7 +106,7 @@ struct PlanReadyView: View {
             }
 
             // Fixed Start Now button
-            PrimaryButton(title: "Start Now", action: onComplete)
+            PrimaryButton(title: "Continue", action: onComplete)
                 .padding(.horizontal, 33)
                 .padding(.bottom, 24)
                 .background(
